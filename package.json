@@ -1,0 +1,59 @@
+{
+  "name": "unique-academy-app",
+  "version": "1.0.0",
+  "description": "Unique Academy Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac --x64",
+    "watch": "nodemon --watch main.js --exec npm start",
+    "build": "electron-builder build --win --publish never"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "github:castlabs/electron-releases#v30.0.9+wvcus",
+    "electron-builder": "^26.0.12",
+    "electron-wix-msi": "3.0.4"
+  },
+  "publish": [
+    {
+      "provider": "github",
+      "repo": "unique-academy-app",
+      "host": "https://github.com/uniqueacademy/unique-academy-app.git",
+      "protocol": "https"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uniqueacademy/unique-academy-app.git"
+  },
+  "build": {
+    "appId": "com.uniqueacademy.app",
+    "afterPack": "scripts/evs-sign.js",
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.education"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "asar": true
+  }
+}
