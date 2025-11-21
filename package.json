@@ -34,6 +34,7 @@
   },
   "build": {
     "appId": "com.uniqueacademy.app",
+    "productName": "Unique Academy App",
     "afterPack": "scripts/evs-sign.js",
     "electronDownload": {
       "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
@@ -46,14 +47,23 @@
       "category": "public.app-category.education"
     },
     "nsis": {
+      "guid": "unique-academy-app-guid-12345",
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Unique Academy App",
+      "include": "scripts/installer.nsh",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "directories": {
       "buildResources": "build",
       "output": "dist"
     },
-    "asar": true
+    "asar": true,
+    "publish": null
   }
 }

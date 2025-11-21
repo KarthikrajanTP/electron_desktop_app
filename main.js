@@ -2,6 +2,12 @@ const { app, components, BrowserWindow } = require('electron');
 const os = require('os');
 const crypto = require('crypto');
 
+// Handle --quit command line argument for installer
+if (process.argv.includes('--quit')) {
+  app.quit();
+  process.exit(0);
+}
+
 function getMachineInfo() {
   const networkInterfaces = os.networkInterfaces();
   const allMacs = [];
