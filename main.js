@@ -1,4 +1,4 @@
-const { app, components, BrowserWindow } = require('electron');
+const { app, components, BrowserWindow, Menu, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const os = require('os');
 const crypto = require('crypto');
@@ -10,6 +10,9 @@ if (process.argv.includes('--quit')) {
 }
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
+// Set app name
+app.setName('Unique Academy App');
 
 // Track main window and update state
 let mainWindow = null;
@@ -176,6 +179,51 @@ function createWindow() {
   });
 
   win.loadURL('https://app.theuniqueacademycommerce.com/dashboard');
+
+  // Setup custom menu
+  setupMenu(win);
+}
+
+function setupMenu(mainWindow) {
+  const menuTemplate = [
+    {
+      label: app.getName(),
+      submenu: [
+        {
+          label: 'About ' + app.getName(),
+          click: () => {
+            showAboutDialog(mainWindow);
+          },
+        },
+        {
+          type: 'separator',
+        },
+        {
+          label: 'Quit ' + app.getName(),
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => {
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'File',
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+}
+
+function showAboutDialog(mainWindow) {
+  const aboutOptions = {
+    title: 'About ' + app.getName(),
+    version: app.getVersion(),
+    copyright: 'Copyright © Dtree Labs LLP',
+    text: 'https://dtreelabs.com',
+  };
+  dialog.showMessageBox(mainWindow, aboutOptions);
 }
 app.whenReady().then(async () => {
   await components.whenReady();
