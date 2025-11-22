@@ -15,6 +15,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
   "devDependencies": {
     "electron": "github:castlabs/electron-releases#v30.0.9+wvcus",
     "electron-builder": "^26.0.12",

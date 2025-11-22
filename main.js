@@ -1,4 +1,5 @@
 const { app, components, BrowserWindow } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const os = require('os');
 const crypto = require('crypto');
 
@@ -9,6 +10,55 @@ if (process.argv.includes('--quit')) {
 }
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
+// Track main window and update state
+let mainWindow = null;
+let isQuittingForUpdate = false;
+
+// Configure autoUpdater
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = false;
+
+// Listen for update-downloaded event (Windows-specific handling)
+autoUpdater.on('update-downloaded', () => {
+  if (process.platform === 'win32') {
+    // Set flag to allow window to close immediately
+    isQuittingForUpdate = true;
+    
+    // Close the main window immediately to allow installer to proceed
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.removeAllListeners('close');
+      mainWindow.close();
+    }
+    
+    // Wait a short delay, then quit and install
+    setTimeout(() => {
+      autoUpdater.quitAndInstall(false, true);
+    }, 1000);
+  } else {
+    // For other platforms, use standard behavior
+    setTimeout(() => {
+      autoUpdater.quitAndInstall();
+    }, 1000);
+  }
+});
+
+// Optional: Log update events for debugging
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', () => {
+  console.log('Update available. Downloading...');
+});
+
+autoUpdater.on('update-not-available', () => {
+  console.log('Update not available.');
+});
+
+autoUpdater.on('error', (error) => {
+  console.error('AutoUpdater error:', error);
+});
 
 function getMachineInfo() {
   const networkInterfaces = os.networkInterfaces();
@@ -81,6 +131,7 @@ function createWindow() {
   const machineInfo = getMachineInfo();
   
   const win = new BrowserWindow(windowOptions);
+  mainWindow = win;
   
   // Enable screenshot prevention (content protection)
   win.setContentProtection(true);
@@ -102,6 +153,23 @@ function createWindow() {
     return { action: 'deny' };
   });
 
+  // Handle window close event - allow quitting during update installation
+  win.on('close', (event) => {
+    // On Windows, if we're quitting for update, allow close immediately
+    if (process.platform === 'win32' && isQuittingForUpdate) {
+      mainWindow = null;
+      return;
+    }
+    
+    // For normal close on macOS, prevent default and hide window
+    if (process.platform === 'darwin') {
+      if (!isQuittingForUpdate) {
+        event.preventDefault();
+        win.hide();
+      }
+    }
+  });
+
   // Inject localStorage after page loads
   win.webContents.on('did-finish-load', () => {
     injectLocalStorage(win.webContents, machineInfo);
@@ -112,11 +180,37 @@ function createWindow() {
 app.whenReady().then(async () => {
   await components.whenReady();
   createWindow();
+  
+  // Check for updates after app is ready
+  if (!app.isPackaged) {
+    console.log('Skipping auto-update check in development mode');
+  } else {
+    autoUpdater.checkForUpdates();
+    
+    // Check for updates periodically (every 4 hours)
+    setInterval(() => {
+      autoUpdater.checkForUpdates();
+    }, 4 * 60 * 60 * 1000);
+  }
 });
 
 app.on('window-all-closed', () => {
+  // Allow quit during update installation
+  if (isQuittingForUpdate) {
+    app.quit();
+    return;
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+// Handle before-quit to ensure clean shutdown during update
+app.on('before-quit', (event) => {
+  if (isQuittingForUpdate) {
+    // Allow quit to proceed
+    return;
   }
 });
 
